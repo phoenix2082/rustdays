@@ -307,4 +307,101 @@ extern crate log;
 extern crate env_logger;
 ```
 
+**Step 26**: Next we are going to create our Actor System which will be handling all messages. This can be done with one line only:
+```
+let product_system = actix::System::new("products");
+```
+
+**Step 27**: We will create, configure and start our DB Executor Actors which is expected to handle all incoming messages using pool.
+```
+// Configure and start DB Executor actors
+let manager = ConnectionManager::<PgConnection>::new("postgres://ironman:jarvis@localhost/customers");
+let pool = r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.");
+
+let addr = SyncArbiter::start(12, move || DbExecutor(pool.clone()));
+```
+
+Following crates and use statement need to be added to compile/build the above code.
+```
+extern crate diesel;
+extern crate r2d2;
+
+use actix::SyncArbiter;
+
+use diesel::r2d2::ConnectionManager;
+use diesel::prelude::PgConnection;
+```
+
+**Step 28**: Now we can use Actix Web to create new server and register app with handler to serve Query Account Requests.
+```
+// Add new server
+server::new(move || {
+    App::with_state(AppState{db: addr.clone()})
+        .middleware(Logger::default())
+        .middleware(Logger::new("%a %{User-Agent}i"))
+        .prefix("/app1")    
+        .resource("/maccounts",
+                  |r| r.method(http::Method::GET).with(get_accounts_async))
+})
+  .bind("127.0.0.1:57081")
+  .unwrap()
+  .workers(1)
+  .start();
+```
+
+we need to add following crates and use statements to get above code compiles successfully.
+```
+extern crate log;
+
+use actix_web::server;
+use actix_web::App;
+use actix_web::middleware::Logger;
+use actix_web::http;
+use actix_web::http::Method;
+```
+
+**Step 29**: Now we can add statement to run the Actor system.
+```
+println!("Started htp server: 127.0.0.1:57081");
+let _ = customer_system.run();
+```
+
+**Step 30**: Execute cargo run command to start the server. You should see soomething like below:
+```
+ INFO 2018-08-16T13:32:08Z: actix_web::server::srv: Starting 4 http workers
+ INFO 2018-08-16T13:32:08Z: actix_web::server::srv: Starting server on http://127.0.0.1:57081
+```
+
+**Step 31**: Use **curl** to query accounts. The output should look something like below:
+
+$ curl -i http://127.0.0.1:57081/app1/maccounts
+
+HTTP/1.1 200 OK
+content-length: 2
+content-type: application/json
+date: Thu, 16 Aug 2018 12:07:43 GMT
+
+Hurray our server is running and telling us it's doing okay with "200 OK" message.
+
+**Step 32** - Now we need to create some data to actually see some actual JSON response. Create some records using below statement if you are using PostgreSQL.
+```
+ INSERT INTO account (firstname, middlename, lastname, email_id) VALUES ('Captain', 'What!', 'America', 'captain@shields.com');
+ ```
+ 
+**Step 33** - Curl again and you should see some response this time.
+```
+curl -i http://127.0.0.1:57081/app1/maccounts
+HTTP/1.1 200 OK
+content-length: 102
+content-type: application/json
+date: Thu, 16 Aug 2018 12:13:04 GMT
+
+[{"id":1,"firstname":"Captain","middlename":"What","lastname":"America","email":"captain@shield.com"}]
+```
+
+Alrigth that's enough for today.
+
+ 
 
