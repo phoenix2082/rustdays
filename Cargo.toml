@@ -1,7 +1,7 @@
 [package]
 name = "customerservice"
 version = "0.1.0"
-authors = ["Phoenix AI <phoenixa2082@gmail.com>"]
+authors = [""]
 
 [dependencies]
 actix = "0.7"
