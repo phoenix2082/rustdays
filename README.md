@@ -171,7 +171,7 @@ impl Message for QueryAccount {
 }
 ```
 
-We need to add following use statements to make above code compile successfully.
+We need to add following use statements to make above code compiles successfully.
 
 ```    
 use accounts::actix::Message;
@@ -187,7 +187,7 @@ impl Actor for DbExecutor {
 }
 ```
 
-We need to add following use statements to make above code compile successfully.
+We need to add following use statements to make above code compiles successfully.
 
 ```
 use accounts::actix::Actor;
@@ -195,3 +195,116 @@ use accounts::actix::SyncContext;
 ```
 
 Run cargo check/build again to make sure changes made so far compiles.
+
+**Step 21** - Now we are going to implement a handler which is actually going to query the database to get list of accounts.
+```
+impl Handler<QueryAccount> for DbExecutor {
+    type Result = Result<Vec<Account>, Error>;
+
+    fn handle(&mut self, msg: QueryAccount, _: &mut Self::Context) -> Self::Result {
+
+        let conn: &PgConnection = &self.0.get().unwrap();
+
+        let mut items = account
+            .load::<Account>(conn)
+            .expect("Error loading accounts.");
+
+        Ok(items)
+    }
+}
+```
+
+We need to add following use statements to make above code compiles successfully.
+
+```
+use accounts::actix::Handler;
+use models::Account;
+use schema::account::dsl::*;
+```
+
+**Step 22** - Now we are going to add request handler in **_main.rs_** file, which we be mapped to URI later. For this first we need to create a State holder for DBExecutor we created in previous steps.
+```
+/// State with DbExecutor address
+struct AppState {
+    db: Addr<DbExecutor>,
+}
+```
+
+We need to add following use statements to make above code compiles successfully.
+```
+use accounts::DbExecutor;
+```
+
+**Step 23** - Now we are going to add method which is going to use DbExecutor state to handle incoming QueryAccount Message and return list of accounts as JSON.
+```
+/// Method to load accounts.
+/// Async get accounts request handler
+fn get_accounts_async(state: State<AppState>) -> FutureResponse<HttpResponse> {
+    // send async `QueryAccount` message to a `DbExecutor`
+    state
+        .db
+        .send(QueryAccount)
+        .from_err()
+        .and_then(|res| match res {
+            Ok(account) => Ok(HttpResponse::Ok().json(account)),
+            Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        })
+        .responder()
+}
+```
+
+We have to add following crates and use statement to compile code successfully.
+
+```
+extern crate actix_web;
+extern crate customerservice;
+extern crate futures;
+```
+
+Add it after other use statements added so far.
+```
+use actix_web::AsyncResponder;
+use actix_web::FutureResponse;
+use actix_web::HttpResponse;
+use actix_web::State;
+use customerservice::accounts;
+use futures::Future;
+```
+
+We won't be getting any error related to missing functions or modules, but we will be getting error that account can not be converted as Accont struct is not serializble. Move to next step to resolve this error
+
+**Step 24** - Implement Serializer for Account struct so that it can be converted to JSON while sending response back to query account request. This needs to be done in **_accounts.rs_** file.
+```
+extern crate serde;
+
+use models::serde::ser::{Serialize, Serializer, SerializeStruct};
+
+impl Serialize for Account {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // 5 is the number of fields in the struct.
+        let mut state = serializer.serialize_struct("Account", 5)?;
+        state.serialize_field("id", &self.id)?;
+        state.serialize_field("firstname", &self.firstname)?;
+        state.serialize_field("middlename", &self.middlename)?;
+        state.serialize_field("lastname", &self.lastname)?;
+        state.serialize_field("email", &self.email)?;
+        state.end()
+    }
+}
+```
+
+**Step 25** - Now the basic work has been done i.e. getting data from DB and converting it to JSON. Next step is to map it to request URI. This is done using actix-web. Open **_main.rs_** file and add following lines:
+```
+std::env::set_var("RUST_LOG", "actix_web=info");
+env_logger::init();
+```
+We have just initialized a logger by adding previous two lines and set log level to INFO. You have to add following two crates if not already done so.
+```
+extern crate log;
+extern crate env_logger;
+```
+
+
