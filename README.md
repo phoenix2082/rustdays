@@ -8,7 +8,8 @@
 
 - [ ] Improve Documentation.
 - [ ] Add Test Cases
-- [ ] Add support for creatin, update and delete request.
+- [ ] Add support for creating, update and delete request.
+- [ ] Add more info about what we are going to learn.
 
 **Step 1:** - Create new cargo project using:
 
@@ -94,3 +95,42 @@ use std::env;
 ```
 
 **Step 10** - Run cargo check/build to verify if code compiles successfully without any warnings/errors.
+
+**Step 11** - Now, we need to create struct to read data from DB. For this add following two module definition at the top after use statement in lib.rs file.
+```
+pub mod schema;
+pub mod models;
+```
+
+**Step 12** - Now we need to create two modules which we have just declared in previous step. Proceed to next step.
+
+**Step 13** - Create model.rs file next to lib.rs file. And create a struct to map table data. The #[derive(Queryable)] will generate all of the code needed to load a Post struct from a SQL query. Example -
+```
+#[derive(Queryable)]
+pub struct Account {
+    pub id         : i32,
+    pub firstname  : String,
+    pub middlename : Option<String>,
+    pub lastname   : String,
+    pub email      : String,
+}
+```
+
+**Step 14** - Usually schema.rs file is not created by hand and is automatically generated when **"diesel setup"** command is executed. It is generated in src directory. Open and verify that generated schema meets you expectation of vaious column types. Here is sample generated for me by "diesel setup command". I am using PostgreSQL, if you are using some other db , things might not look same.
+```
+table! {
+  account (id) {
+      id -> Int4,
+      firstname -> Varchar,
+      middlename -> Nullable<Varchar>,
+      lastname -> Varchar,
+      email_id -> Varchar,
+  }
+}
+```
+
+**Step 15** - It is good practice to keep your entity related methods in separate file. We are going to add new module first and then create required file to keep all functions together. For this add following line after where you have added model and schema module in lib.rs file.
+    
+    pub mod accounts;
+
+Then create a file called - **_accounts.rs_** next to lib.rs file.
