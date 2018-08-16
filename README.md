@@ -133,4 +133,65 @@ table! {
     
     pub mod accounts;
 
-Then create a file called - **_accounts.rs_** next to lib.rs file.
+Then create a file called - **_accounts.rs_** next to **_lib.rs_** file.
+
+**Step 16** - We are going to use actix-web to build our rest services. The actix-web is built on top of actix which have very efficient Actor/Messeging support so we wil be using Actix to pass data using Messages to access data. Add following crates at the top of file created in previous steps to add support for required crates.
+```
+extern crate diesel;
+extern crate r2d2;
+extern crate actix;
+extern crate actix_web;
+```
+Right now is good time to run cargo check to verify if things are working well.
+
+**Step 17** - We are going to define a struct for ConnectionPool. Add following line for this: 
+```
+pub struct DbExecutor(pub Pool<ConnectionManager<PgConnection>>);
+```
+
+Compiling following lines successfully requires addition of below use statement.
+```
+use diesel::r2d2::ConnectionManager;
+use diesel::pg::PgConnection;
+use diesel::r2d2::Pool;
+```
+
+Run cargo check to see if it compiles successfully.
+
+**Step 18** -Now we need to create another struct for Message passing to query accounts (You can give it a name based on whatever name reflect best mapping to table name. If you have created table/enity with some other name.)
+```
+pub struct QueryAccount;
+```
+
+**Step 19** - Implement Message holder for QueryAccount struct created in previous step, which is actually used by actix as valid message.
+
+```
+impl Message for QueryAccount {
+    type Result = Result<Vec<Account>, Error>;
+}
+```
+
+We need to add following use statements to make above code compile successfully.
+
+```    
+use accounts::actix::Message;
+use diesel::r2d2::Error;
+```
+
+Run cargo build again to make sure changes made so far compiles.
+
+**Step 20** - Finally we need to implement an Actor, which will be spawned by actix Actor system whenever a new request arrives query an account.
+```
+impl Actor for DbExecutor {
+    type Context = SyncContext<Self>;
+}
+```
+
+We need to add following use statements to make above code compile successfully.
+
+```
+use accounts::actix::Actor;
+use accounts::actix::SyncContext;
+```
+
+Run cargo check/build again to make sure changes made so far compiles.
