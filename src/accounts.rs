@@ -18,7 +18,11 @@ use schema::account::dsl::*;
 
 pub struct DbExecutor(pub Pool<ConnectionManager<PgConnection>>);
 
-pub struct QueryAccount;
+pub struct QueryAccount{
+    pub offset: u32,
+    pub limit: u32,
+    pub firstname: Option<String>,
+}
 
 impl Message for QueryAccount {
     type Result = Result<Vec<Account>, Error>;
@@ -35,7 +39,15 @@ impl Handler<QueryAccount> for DbExecutor {
 
         let conn: &PgConnection = &self.0.get().unwrap();
 
-        let mut items = account
+        let mut query = account.into_boxed();
+        
+        if let Some(fname) = msg.firstname {
+            query = query.filter(firstname.eq(fname));
+        }
+        
+        let mut items = query
+            .limit(msg.limit as i64)
+            .offset(msg.offset as i64)
             .load::<Account>(conn)
             .expect("Error loading accounts.");
 

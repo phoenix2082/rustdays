@@ -45,6 +45,7 @@ struct AppState {
 struct Info {
     pagestart: u32,
     pagesize: u32,
+    firstname: Option<String>,
 }
 
 
@@ -59,6 +60,7 @@ fn get_accounts_async(
         .send(QueryAccount {
             offset: qparams.pagestart,
             limit: qparams.pagesize,
+            firstname: qparams.firstname.clone(),
         })
         .from_err()
         .and_then(|res| match res {
