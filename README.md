@@ -11,6 +11,10 @@
 - [ ] Add support for creating, update and delete request.
 - [ ] Add more info about what we are going to learn.
 
+## Links ##
+[Tutorial - Adding support for pagination in Account Rest Service](https://github.com/phoenix2082/rustdays/blob/master/guide/add-pagination-support.md)
+
+
 **Step 1:** - Create new cargo project using:
 
 # cargo new --bin customerservice
