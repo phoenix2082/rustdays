@@ -16,9 +16,9 @@
 
 
 **Step 1:** - Create new cargo project using:
-
-# cargo new --bin customerservice
-
+```
+$ cargo new --bin customerservice
+```
 and Add dependencies in Cargo.toml
 
 ```
