@@ -14,6 +14,7 @@
 ## Links ##
 [Tutorial - Adding support for pagination in Account Rest Service](https://github.com/phoenix2082/rustdays/blob/master/guide/add-pagination-support.md)
 
+[Tutorial - Adding support for Query by Optional Parameter](https://github.com/phoenix2082/rustdays/blob/master/guide/add-support-for-query-by-optional-parameters.md)
 
 **Step 1:** - Create new cargo project using:
 ```
@@ -54,7 +55,8 @@ $ diesel migration generate create_customers
 ```
      
 **Step 6:** - Open migration/[DIR_NAME]/up.sql and add create table statement.
-```
+
+```sql
 CREATE TABLE account (
   id SERIAL PRIMARY KEY,
   firstname VARCHAR NOT NULL,
@@ -75,7 +77,7 @@ DROP account;
 ```
 
 **Step 9:** - Create lib.rs file if does not exist in src directory and add following method to connect to database.
-```
+```rust
 pub fn establish_connection() -> PgConnection {
     dotenv().ok();
 
@@ -87,7 +89,7 @@ pub fn establish_connection() -> PgConnection {
  ```       
  
  It is good practice to run cargo check frequently and as there are few module have been added, so we need to add required crates and use statements.
-``` 
+```rust
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
@@ -101,7 +103,7 @@ use std::env;
 **Step 10** - Run cargo check/build to verify if code compiles successfully without any warnings/errors.
 
 **Step 11** - Now, we need to create struct to read data from DB. For this add following two module definition at the top after use statement in lib.rs file.
-```
+```rust
 pub mod schema;
 pub mod models;
 ```
@@ -109,7 +111,7 @@ pub mod models;
 **Step 12** - Now we need to create two modules which we have just declared in previous step. Proceed to next step.
 
 **Step 13** - Create model.rs file next to lib.rs file. And create a struct to map table data. The #[derive(Queryable)] will generate all of the code needed to load a Post struct from a SQL query. Example -
-```
+```rust
 #[derive(Queryable)]
 pub struct Account {
     pub id         : i32,
@@ -140,7 +142,7 @@ table! {
 Then create a file called - **_accounts.rs_** next to **_lib.rs_** file.
 
 **Step 16** - We are going to use actix-web to build our rest services. The actix-web is built on top of actix which have very efficient Actor/Messeging support so we wil be using Actix to pass data using Messages to access data. Add following crates at the top of file created in previous steps to add support for required crates.
-```
+```rust
 extern crate diesel;
 extern crate r2d2;
 extern crate actix;
@@ -149,12 +151,14 @@ extern crate actix_web;
 Right now is good time to run cargo check to verify if things are working well.
 
 **Step 17** - We are going to define a struct for ConnectionPool. Add following line for this: 
-```
+
+```rust
 pub struct DbExecutor(pub Pool<ConnectionManager<PgConnection>>);
 ```
 
 Compiling following lines successfully requires addition of below use statement.
-```
+
+```rust
 use diesel::r2d2::ConnectionManager;
 use diesel::pg::PgConnection;
 use diesel::r2d2::Pool;
@@ -163,13 +167,14 @@ use diesel::r2d2::Pool;
 Run cargo check to see if it compiles successfully.
 
 **Step 18** -Now we need to create another struct for Message passing to query accounts (You can give it a name based on whatever name reflect best mapping to table name. If you have created table/enity with some other name.)
-```
+
+```rust
 pub struct QueryAccount;
 ```
 
 **Step 19** - Implement Message holder for QueryAccount struct created in previous step, which is actually used by actix as valid message.
 
-```
+```rust
 impl Message for QueryAccount {
     type Result = Result<Vec<Account>, Error>;
 }
@@ -177,7 +182,7 @@ impl Message for QueryAccount {
 
 We need to add following use statements to make above code compiles successfully.
 
-```    
+```rust 
 use accounts::actix::Message;
 use diesel::r2d2::Error;
 ```
@@ -185,7 +190,8 @@ use diesel::r2d2::Error;
 Run cargo build again to make sure changes made so far compiles.
 
 **Step 20** - Finally we need to implement an Actor, which will be spawned by actix Actor system whenever a new request arrives query an account.
-```
+
+```rust
 impl Actor for DbExecutor {
     type Context = SyncContext<Self>;
 }
@@ -193,7 +199,7 @@ impl Actor for DbExecutor {
 
 We need to add following use statements to make above code compiles successfully.
 
-```
+```rust
 use accounts::actix::Actor;
 use accounts::actix::SyncContext;
 ```
@@ -201,7 +207,8 @@ use accounts::actix::SyncContext;
 Run cargo check/build again to make sure changes made so far compiles.
 
 **Step 21** - Now we are going to implement a handler which is actually going to query the database to get list of accounts.
-```
+
+```rust
 impl Handler<QueryAccount> for DbExecutor {
     type Result = Result<Vec<Account>, Error>;
 
@@ -220,14 +227,15 @@ impl Handler<QueryAccount> for DbExecutor {
 
 We need to add following use statements to make above code compiles successfully.
 
-```
+```rust
 use accounts::actix::Handler;
 use models::Account;
 use schema::account::dsl::*;
 ```
 
 **Step 22** - Now we are going to add request handler in **_main.rs_** file, which we be mapped to URI later. For this first we need to create a State holder for DBExecutor we created in previous steps.
-```
+
+```rust
 /// State with DbExecutor address
 struct AppState {
     db: Addr<DbExecutor>,
@@ -235,12 +243,14 @@ struct AppState {
 ```
 
 We need to add following use statements to make above code compiles successfully.
-```
+
+```rust
 use accounts::DbExecutor;
 ```
 
 **Step 23** - Now we are going to add method which is going to use DbExecutor state to handle incoming QueryAccount Message and return list of accounts as JSON.
-```
+
+```rust
 /// Method to load accounts.
 /// Async get accounts request handler
 fn get_accounts_async(state: State<AppState>) -> FutureResponse<HttpResponse> {
@@ -259,14 +269,15 @@ fn get_accounts_async(state: State<AppState>) -> FutureResponse<HttpResponse> {
 
 We have to add following crates and use statement to compile code successfully.
 
-```
+```rust
 extern crate actix_web;
 extern crate customerservice;
 extern crate futures;
 ```
 
 Add it after other use statements added so far.
-```
+
+```rust
 use actix_web::AsyncResponder;
 use actix_web::FutureResponse;
 use actix_web::HttpResponse;
@@ -278,7 +289,9 @@ use futures::Future;
 We won't be getting any error related to missing functions or modules, but we will be getting error that account can not be converted as Accont struct is not serializble. Move to next step to resolve this error
 
 **Step 24** - Implement Serializer for Account struct so that it can be converted to JSON while sending response back to query account request. This needs to be done in **_accounts.rs_** file.
-```
+
+```rust
+
 extern crate serde;
 
 use models::serde::ser::{Serialize, Serializer, SerializeStruct};
@@ -301,23 +314,28 @@ impl Serialize for Account {
 ```
 
 **Step 25** - Now the basic work has been done i.e. getting data from DB and converting it to JSON. Next step is to map it to request URI. This is done using actix-web. Open **_main.rs_** file and add following lines:
-```
+
+```rust
 std::env::set_var("RUST_LOG", "actix_web=info");
 env_logger::init();
 ```
+
 We have just initialized a logger by adding previous two lines and set log level to INFO. You have to add following two crates if not already done so.
-```
+
+```rust
 extern crate log;
 extern crate env_logger;
 ```
 
 **Step 26**: Next we are going to create our Actor System which will be handling all messages. This can be done with one line only:
-```
+
+```rust
 let product_system = actix::System::new("products");
 ```
 
 **Step 27**: We will create, configure and start our DB Executor Actors which is expected to handle all incoming messages using pool.
-```
+
+```rust
 // Configure and start DB Executor actors
 let manager = ConnectionManager::<PgConnection>::new("postgres://ironman:jarvis@localhost/customers");
 let pool = r2d2::Pool::builder()
@@ -328,7 +346,8 @@ let addr = SyncArbiter::start(12, move || DbExecutor(pool.clone()));
 ```
 
 Following crates and use statement need to be added to compile/build the above code.
-```
+
+```rust
 extern crate diesel;
 extern crate r2d2;
 
@@ -339,7 +358,8 @@ use diesel::prelude::PgConnection;
 ```
 
 **Step 28**: Now we can use Actix Web to create new server and register app with handler to serve Query Account Requests.
-```
+
+```rust
 // Add new server
 server::new(move || {
     App::with_state(AppState{db: addr.clone()})
@@ -356,7 +376,8 @@ server::new(move || {
 ```
 
 we need to add following crates and use statements to get above code compiles successfully.
-```
+
+```rust
 extern crate log;
 
 use actix_web::server;
@@ -366,13 +387,15 @@ use actix_web::http;
 use actix_web::http::Method;
 ```
 
-**Step 29**: Now we can add statement to run the Actor system.
+**Step 29**: Now we can add statement to run the Actor system..
+
 ```
 println!("Started htp server: 127.0.0.1:57081");
 let _ = customer_system.run();
 ```
 
 **Step 30**: Execute cargo run command to start the server. You should see soomething like below:
+
 ```
  INFO 2018-08-16T13:32:08Z: actix_web::server::srv: Starting 4 http workers
  INFO 2018-08-16T13:32:08Z: actix_web::server::srv: Starting server on http://127.0.0.1:57081
@@ -380,21 +403,24 @@ let _ = customer_system.run();
 
 **Step 31**: Use **curl** to query accounts. The output should look something like below:
 
+```
 $ curl -i http://127.0.0.1:57081/app1/maccounts
 
 HTTP/1.1 200 OK
 content-length: 2
 content-type: application/json
 date: Thu, 16 Aug 2018 12:07:43 GMT
-
+```
 Hurray our server is running and telling us it's doing okay with "200 OK" message.
 
 **Step 32** - Now we need to create some data to actually see some actual JSON response. Create some records using below statement if you are using PostgreSQL.
-```
+
+```sql
  INSERT INTO account (firstname, middlename, lastname, email_id) VALUES ('Captain', 'What!', 'America', 'captain@shields.com');
  ```
  
 **Step 33** - Curl again and you should see some response this time.
+
 ```
 curl -i http://127.0.0.1:57081/app1/maccounts
 HTTP/1.1 200 OK
