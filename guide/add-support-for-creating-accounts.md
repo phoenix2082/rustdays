@@ -52,7 +52,7 @@ impl Handler<CreateAccount> for DbExecutor {
 
 **Step 4** - Now in src/main.rs we need to add struct, which will be used by JSON extractor to map values from request and create a message to call backend handler.
 
-```
+```rust
 #[derive(Deserialize)]
 struct AccountInfo {
     firstname  : String,
@@ -64,7 +64,8 @@ struct AccountInfo {
 
 **Step 5** - Now we have to add a new function in src/main.rs which will handle the create Account request, extract the json from request body, create a message and pass it to backend handler.
 
-```
+```rust
+
 /// Create account request handler
 fn create_account(
                   (info, state): (Json<AccountInfo>, State<AppState>),
