@@ -15,6 +15,7 @@ use diesel::prelude::*;
 
 use models::Account;
 use schema::account::dsl::*;
+use super::schema::account;
 
 pub struct DbExecutor(pub Pool<ConnectionManager<PgConnection>>);
 
@@ -53,7 +54,43 @@ impl Handler<QueryAccount> for DbExecutor {
 
         Ok(items)
     }
-}    
+}
+
+#[derive(Insertable)]
+#[table_name="account"]
+pub struct CreateAccount {
+    pub firstname: String,
+    pub middlename: Option<String>,
+    pub lastname: String,
+    #[column_name = "email_id"]
+    pub email: String,
+}
+
+impl Message for CreateAccount {
+    type Result = Result<Account, Error>;
+}
+
+impl Handler<CreateAccount> for DbExecutor {
+    type Result = Result<Account, Error>;
+
+    fn handle(&mut self, msg: CreateAccount, _: &mut Self::Context) -> Self::Result {
+
+        let conn: &PgConnection = &self.0.get().unwrap();
+
+        let inserted_id: i32 = diesel::insert_into(account)
+            .values(&msg)
+            .returning(id)
+            .get_result(conn)
+            .expect("Error creating account");
+
+        let mut items = account
+            .filter(id.eq(&inserted_id))
+            .load::<Account>(conn)
+            .expect("Error loading account after creating.");
+
+        Ok(items.pop().unwrap())
+    }
+}
 
 
 

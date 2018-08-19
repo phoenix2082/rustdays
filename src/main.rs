@@ -24,14 +24,16 @@ use actix_web::State;
 
 use actix_web::server;
 use actix_web::App;
-use actix_web::middleware::Logger;
+use actix_web::Json;
 use actix_web::http;
+use actix_web::middleware::Logger;
 
 use customerservice::accounts;
 use futures::Future;
 
 use accounts::DbExecutor;
 use accounts::QueryAccount;
+use accounts::CreateAccount;
 
 use diesel::r2d2::ConnectionManager;
 use diesel::prelude::PgConnection;
@@ -48,6 +50,13 @@ struct Info {
     firstname: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct AccountInfo {
+    firstname  : String,
+    middlename : Option<String>,
+    lastname   : String,
+    email      : String,
+}
 
 /// Method to laod accounts
 /// Async get products request handler
@@ -70,6 +79,27 @@ fn get_accounts_async(
         .responder()
 }
 
+fn create_account(
+                  (info, state): (Json<AccountInfo>, State<AppState>),
+) -> FutureResponse<HttpResponse> {
+    // send async `CreateProduct` message to a `ProductDbExecutor`
+    state
+        .db
+        .send(CreateAccount
+              { firstname  : info.firstname.to_string(),
+                middlename : info.middlename.clone(),
+                lastname   : info.lastname.to_string(),
+		email      : info.email.to_string(),
+              })
+        .from_err()
+        .and_then(|res| match res {
+            Ok(account) => Ok(HttpResponse::Ok().json(account)),
+            Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        })
+        .responder()
+}
+
+
 fn main() {
 
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -91,8 +121,11 @@ fn main() {
             .middleware(Logger::default())
             .middleware(Logger::new("%a %{User-Agent}i"))
             .prefix("/app1")    
-            .resource("/maccounts",
-                      |r| r.method(http::Method::GET).with(get_accounts_async))
+            .resource("/maccounts", |r| {
+                r.method(http::Method::GET).with(get_accounts_async);
+                r.method(http::Method::POST).with(create_account)
+            })
+            
     })
         .bind("127.0.0.1:57081")
         .unwrap()
