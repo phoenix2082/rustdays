@@ -1,4 +1,4 @@
-#Adding Support for Creating Accounts in "Account Rest Service".#
+## Adding Support for Creating Accounts in "Account Rest Service".
 
 Next feature we want is to have ability to create accounts using our Account Rest Service. We are still going to use Actor models. Our Actors will accept message to Create an Account, Send request to DB and create a record and return the Account when Account is created successfully.
 
@@ -26,7 +26,7 @@ impl Message for CreateAccount {
 
 **Step 3** - Now we are going to implement Message handler which will do the actual job of inserting a record in account table and return a account with id when created successfully.
 
-'''rust
+```rust
 impl Handler<CreateAccount> for DbExecutor {
     type Result = Result<Account, Error>;
 
@@ -64,6 +64,7 @@ struct AccountInfo {
 
 **Step 5** - Now we have to add a new function in src/main.rs which will handle the create Account request, extract the json from request body, create a message and pass it to backend handler.
 
+```
 /// Create account request handler
 fn create_account(
                   (info, state): (Json<AccountInfo>, State<AppState>),
@@ -84,6 +85,7 @@ fn create_account(
         })
         .responder()
 }
+```
 
 We have to add following use statement to build our code successfully.
 
@@ -93,7 +95,7 @@ use actix_web::Json;
 use accounts::CreateAccount;
 ```
 
-**Step 6** - Next step is to map our method with create account POST request. For this add following line to our App in main method.
+**Step 6** - Next step is to map our method with create account POST request. For this add following lines to our App in main method.
 
 ```rust
 
@@ -106,7 +108,7 @@ use accounts::CreateAccount;
             .prefix("/app1")    
             .resource("/maccounts", |r| {
                 r.method(http::Method::GET).with(get_accounts_async);
-                **r.method(http::Method::POST).with(create_account)**
+                r.method(http::Method::POST).with(create_account)
             })
             
     })
@@ -114,7 +116,7 @@ use accounts::CreateAccount;
     
  ```   
 
-That's it. run **cargo run** to fire up server.
+That's it. open terminal and execute **cargo run** to fire up server.
 
 **Step 7** - Lets create our first account using curl.
 
