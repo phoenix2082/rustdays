@@ -35,6 +35,7 @@ use futures::Future;
 use accounts::DbExecutor;
 use accounts::QueryAccount;
 use accounts::CreateAccount;
+use accounts::DeleteAccount;
 
 use diesel::r2d2::ConnectionManager;
 use diesel::prelude::PgConnection;
@@ -124,6 +125,26 @@ fn update_account(
         .responder()
 }
 
+#[derive(Serialize)]
+pub struct DeleteResult {
+    result: bool,
+}
+
+/// Delete Account request handler.
+fn delete_account(
+                 (path, state): (Path<(u32)>, State<AppState>),
+) -> FutureResponse<HttpResponse> {
+
+    state
+        .db
+        .send(DeleteAccount {id: path.into_inner()})
+        .from_err()
+        .and_then(|res| match res {
+            Ok(dresult) => Ok(HttpResponse::Ok().json(DeleteResult{ result : dresult})),
+            Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        })
+        .responder()
+}
 
 fn main() {
 
@@ -153,7 +174,8 @@ fn main() {
                         r.method(http::Method::POST).with(create_account)
                     })
                     .resource("/{account_id}", |r| {
-                        r.method(http::Method::PUT).with(update_account)
+                        r.method(http::Method::PUT).with(update_account);
+                        r.method(http::Method::DELETE).with(delete_account)
                     })        
             })
             

@@ -113,5 +113,28 @@ impl Handler<Account> for DbExecutor {
     }
 }
 
+pub struct DeleteAccount {
+    pub id: u32,
+}
+
+impl Message for DeleteAccount {
+    type Result = Result<bool, Error>;
+}
+
+impl Handler<DeleteAccount> for DbExecutor {
+    type Result = Result<bool, Error>;
+
+    fn handle(&mut self, msg: DeleteAccount, _: &mut Self::Context) -> Self::Result  {
+
+        let conn: &PgConnection = &self.0.get().unwrap();
+
+        let num_deleted = diesel::delete(account.filter(id.eq(msg.id as i32)))
+            .execute(conn)
+            .expect("Error deleting posts");
+        
+        Ok(if num_deleted == 1 { true } else { false })
+    }
+}
+
 
 
