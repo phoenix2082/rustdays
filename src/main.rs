@@ -19,6 +19,7 @@ use actix::SyncArbiter;
 use actix_web::AsyncResponder;
 use actix_web::FutureResponse;
 use actix_web::HttpResponse;
+use actix_web::Path;
 use actix_web::Query;
 use actix_web::State;
 
@@ -37,6 +38,8 @@ use accounts::CreateAccount;
 
 use diesel::r2d2::ConnectionManager;
 use diesel::prelude::PgConnection;
+
+use customerservice::models::Account;
 
 /// State with DbExecutor address
 struct AppState {
@@ -99,10 +102,32 @@ fn create_account(
         .responder()
 }
 
+fn update_account(
+                 (path, info, state): (Path<(u32)>, Json<Account>, State<AppState>),
+) -> FutureResponse<HttpResponse> {
+
+    let in_account = Account {
+        id: path.into_inner() as i32,
+        ..info.into_inner()
+    };
+
+    println!("{:#?}", in_account);
+    
+    state
+        .db
+        .send(in_account)
+        .from_err()
+        .and_then(|res| match res {
+            Ok(out_account) => Ok(HttpResponse::Ok().json(out_account)),
+            Err(_) => Ok(HttpResponse::InternalServerError().into()),
+        })
+        .responder()
+}
+
 
 fn main() {
 
-    std::env::set_var("RUST_LOG", "actix_web=info");
+    std::env::set_var("RUST_LOG", "actix_web=debug");
     env_logger::init();
 
     let customer_system = actix::System::new("customers");
@@ -120,10 +145,16 @@ fn main() {
         App::with_state(AppState{db: addr.clone()})
             .middleware(Logger::default())
             .middleware(Logger::new("%a %{User-Agent}i"))
-            .prefix("/app1")    
-            .resource("/maccounts", |r| {
-                r.method(http::Method::GET).with(get_accounts_async);
-                r.method(http::Method::POST).with(create_account)
+            .prefix("/app1")
+            .scope("/maccounts", |acc_scope| {
+                acc_scope
+                    .resource("", |r| {
+                        r.method(http::Method::GET).with(get_accounts_async);
+                        r.method(http::Method::POST).with(create_account)
+                    })
+                    .resource("/{account_id}", |r| {
+                        r.method(http::Method::PUT).with(update_account)
+                    })        
             })
             
     })

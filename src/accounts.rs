@@ -9,7 +9,8 @@ use accounts::actix::Actor;
 use accounts::actix::Message;
 
 use diesel::r2d2::{ConnectionManager, Pool};
-use diesel::r2d2::{Error};
+//use diesel::r2d2::{Error};
+use diesel::result::Error;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 
@@ -89,6 +90,26 @@ impl Handler<CreateAccount> for DbExecutor {
             .expect("Error loading account after creating.");
 
         Ok(items.pop().unwrap())
+    }
+}
+
+impl Message for Account {
+    type Result = Result<Account, Error>;
+}
+
+impl Handler<Account> for DbExecutor {
+    type Result = Result<Account, Error>;
+
+    fn handle(&mut self, msg: Account, _: &mut Self::Context) -> Self::Result  {
+
+        let conn: &PgConnection = &self.0.get().unwrap();
+
+        let updated_account = diesel::update(account.find(msg.id))
+            .set(&msg)
+            .get_result::<Account>(conn)?;
+//            .get_result(conn)?;
+        
+        Ok(updated_account)
     }
 }
 

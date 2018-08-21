@@ -1,14 +1,40 @@
 extern crate serde;
 
+use super::schema::account;
+
+use diesel::deserialize::Queryable;
+
+
 use models::serde::ser::{Serialize, Serializer, SerializeStruct};
 
-#[derive(Queryable)]
+use DB;
+
+#[derive(Identifiable)]
+#[derive(AsChangeset)]
+#[table_name="account"]
+#[derive(Debug)]
+#[derive(Deserialize)]
 pub struct Account {
     pub id: i32,
-    pub firstname  : String,
+    pub firstname  : Option<String>,
     pub middlename : Option<String>,
-    pub lastname   : String,
-    pub email      : String,
+    pub lastname   : Option<String>,
+    #[column_name="email_id"]
+    pub email      : Option<String>,
+}
+
+impl Queryable<account::SqlType, DB> for Account {
+    type Row = (i32, String, Option<String>, String, String);
+
+    fn build(row: Self::Row) -> Self {
+        Account {
+            id: row.0,
+            firstname  : Some(row.1),
+            middlename : row.2,
+            lastname   : Some(row.3),
+            email      : Some(row.4),
+        }
+    }
 }
 
 impl Serialize for Account {
