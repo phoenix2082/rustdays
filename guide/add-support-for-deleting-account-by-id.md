@@ -1,4 +1,4 @@
-# Adding support for Deleting account by id in Account Rest service #.
+# Adding support for Deleting account by id in Account Rest service.#
 
 If you followed throught all the guide tutorial, then delete request is simplest to implement. For this:
 
@@ -48,6 +48,7 @@ pub struct DeleteResult {
 
 **Step 5** - Next, we will add a method to handle Delete request.
 
+```rust
 /// Delete Account request handler.
 fn delete_account(
                  (path, state): (Path<(u32)>, State<AppState>),
@@ -63,11 +64,12 @@ fn delete_account(
         })
         .responder()
 }
+```
 
 **Step 6** -  Last step is to add mapping for our delete request in main method.
 
 ```rust
-```
+
 .scope("/maccounts", |acc_scope| {
     acc_scope
         .resource("", |r| {
@@ -79,7 +81,7 @@ fn delete_account(
             r.method(http::Method::DELETE).with(delete_account)
     })
 })
-......
+
 ```
 
 **Step 7** - That's it start application using "cargo run" and send delete request as follows:
