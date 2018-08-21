@@ -18,6 +18,8 @@
 
 [Tutorial - Adding support for Creating Account using JSON POST request in Account Rest Service](https://github.com/phoenix2082/rustdays/blob/master/guide/add-support-for-creating-accounts.md)
 
+[Tutorial - Adding support for Updating Account using JSON PUT request in Account Rest Service](https://github.com/phoenix2082/rustdays/blob/master/guide/add-support-for-updating-accounts.md)
+
 **Step 1:** - Create new cargo project using:
 ```
 $ cargo new --bin customerservice
