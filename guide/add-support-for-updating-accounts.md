@@ -1,4 +1,4 @@
-# Update Request Account Rest Service #
+# Update Account using PUT Request in Account Rest Service #
 
 Alright let's add one more feature in our Account Rest service which is to update an account. For this:
 
@@ -23,7 +23,7 @@ pub struct Account {
 }
 ```
 
-Here only middlename was optional, as not everyone have middle name. We were also using account struct for query request only. For performing update we have to make every property optional, as users of our Account Rest service may want to update only firstname or only lastname or may be two proeprty at same time like firstname, lastname or firstname and email. Think of all possible scenarios you can. For this we have to make all properties optional except id. As for now we don't want users to update id. The primary key **id** can be updated too, if you want but for now let's not do it. I'll tell you later how to it. So let's change Account schema and make properties optional. Open **src/models.rs** file and change type to Option<String> for our Account's fields.
+Here only middlename was optional, as not everyone have middle name. We were also using account struct for query request only. For performing update we have to make every property optional, as users of our Account Rest service may want to update only firstname or only lastname or may be two property at same time like firstname, lastname or firstname and email. Think of all possible scenarios you can. For this we have to make all properties optional except id. As for now we don't want users to update id. The primary key **id** can be updated too, if you want but for now let's not do it. I'll tell you later how to do it. So let's change Account schema and make properties optional. Open **src/models.rs** file and change type to Option<String> for our Account's fields.
 
 ```rust
 #[derive(Queryable)]
@@ -55,9 +55,13 @@ pub struct Account {
 ```
 
 
-Here **Identifiable** trait - means our structs represent fields, which is mapped one-to-one with a row on a database table.
-     **AsChangeset** trait - Diesel provides two way to update values in row. Either update one columns at time or pass an Instance of struct to update multiple fields at the same time. If fields are None (i.e. no value is passed in Instance, those column values left untouched.)
-     **Deserialize** trait - is used so that out handler method in **src/account.rs** file can convert easily for sending JSON response back.
+Here 
+
+**Identifiable** trait - means our structs represent fields, which is mapped one-to-one with a row on a database table.
+
+**AsChangeset** trait - Diesel provides two way to update values in row. Either update one columns at time or pass an Instance of struct to update multiple fields at the same time. If fields are None (i.e. no value is passed in Instance, those column values left untouched.)
+     
+**Deserialize** trait - is used so that out handler method in **src/account.rs** file can convert easily for sending JSON response back.
 
 **Step 4** - If you recall when we added support for querying account, we added annotation #[derive(Queryable)] to our Account struct in **src/models.rs** file. Earlier during query request rows from account table are mapped to struct which in turn deserialized to string. Now we have converted all fields to Option<String> type, we have to implement Queryable trait by ourselves to return string values. If you compile above code without doing so so may get error something like below:
 
@@ -65,7 +69,7 @@ Here **Identifiable** trait - means our structs represent fields, which is mappe
 52 |             .load::<Account>(conn)
    |              ^^^^ the trait `diesel::Queryable<diesel::sql_types::Text, _>` is not implemented for `std::option::Option<std::string::String>`
    |
-```.
+```
 
 To get it working let's implement Queryable for our Account struct like this:
 
@@ -125,7 +129,6 @@ impl Handler<Account> for DbExecutor {
         let updated_account = diesel::update(account.find(msg.id))
             .set(&msg)
             .get_result::<Account>(conn)?;
-//            .get_result(conn)?;
         
         Ok(updated_account)
     }
@@ -145,8 +148,6 @@ fn update_account(
         id: path.into_inner() as i32,
         ..info.into_inner()
     };
-
-    println!("{:#?}", in_account);
     
     state
         .db
