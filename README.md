@@ -2,7 +2,7 @@
 
 # Buidling REST service in rust using actix-web, diesel and PostgreSQL. #
 
-## Asumption ##
+## Assumptions ##
 1. You have completed rust - "The Book".
 2. Cargo is configured in you environment.
 
