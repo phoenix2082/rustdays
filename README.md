@@ -297,7 +297,7 @@ use futures::Future;
 
 We won't be getting any error related to missing functions or modules, but we will be getting error that account can not be converted as Accont struct is not serializble. Move to next step to resolve this error
 
-**Step 24** - Implement Serializer for Account struct so that it can be converted to JSON while sending response back to query account request. This needs to be done in **_accounts.rs_** file.
+**Step 24** - Implement Serializer for Account struct so that it can be converted to JSON while sending response back to query account request. This needs to be done in **_models.rs_** file.
 
 ```rust
 
