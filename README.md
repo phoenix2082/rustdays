@@ -208,8 +208,8 @@ impl Actor for DbExecutor {
 We need to add following use statements to make above code compiles successfully.
 
 ```rust
-use accounts::actix::Actor;
-use accounts::actix::SyncContext;
+use actix::Actor;
+use actix::SyncContext;
 ```
 
 Run cargo check/build again to make sure changes made so far compiles.
