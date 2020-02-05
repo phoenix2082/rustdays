@@ -276,23 +276,19 @@ fn get_accounts_async(state: State<AppState>) -> FutureResponse<HttpResponse> {
 }
 ```
 
-We have to add following crates and use statement to compile code successfully.
-
-```rust
-extern crate actix_web;
-extern crate customerservice;
-extern crate futures;
-```
-
-Add it after other use statements added so far.
+We have to add following use statement to compile code successfully.
 
 ```rust
 use actix_web::AsyncResponder;
+use actix_web::actix::Addr;
 use actix_web::FutureResponse;
 use actix_web::HttpResponse;
 use actix_web::State;
-use customerservice::accounts;
-use futures::Future;
+
+use customerservice::accounts::DbExecutor;
+use customerservice::accounts::QueryAccount;
+
+use futures::future::Future;
 ```
 
 We won't be getting any error related to missing functions or modules, but we will be getting error that account can not be converted as Accont struct is not serializble. Move to next step to resolve this error
