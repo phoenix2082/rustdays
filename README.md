@@ -189,8 +189,10 @@ impl Message for QueryAccount {
 We need to add following use statements to make above code compiles successfully.
 
 ```rust 
-use accounts::actix::Message;
+use actix::Message;
 use diesel::r2d2::Error;
+
+use crate::models::Account;
 ```
 
 Run cargo build again to make sure changes made so far compiles.
