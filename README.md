@@ -318,7 +318,7 @@ impl Serialize for Account {
 }
 ```
 
-**Step 25** - Now the basic work has been done i.e. getting data from DB and converting it to JSON. Next step is to map it to request URI. This is done using actix-web. Open **_main.rs_** file and add following lines:
+**Step 25** - Now the basic work has been done i.e. getting data from DB and converting it to JSON. Next step is to map it to request URI. This is done using actix-web. Open **_main.rs_** file and add following lines in **main** method:
 
 ```rust
 std::env::set_var("RUST_LOG", "actix_web=info");
@@ -335,7 +335,7 @@ extern crate env_logger;
 **Step 26**: Next we are going to create our Actor System which will be handling all messages. This can be done with one line only:
 
 ```rust
-let product_system = actix::System::new("products");
+let customer_system = actix::System::new("customers");
 ```
 
 **Step 27**: We will create, configure and start our DB Executor Actors which is expected to handle all incoming messages using pool.
