@@ -253,7 +253,8 @@ struct AppState {
 We need to add following use statements to make above code compiles successfully.
 
 ```rust
-use accounts::DbExecutor;
+use customerservice::accounts::DbExecutor;
+use actix_web::actix::Addr;
 ```
 
 **Step 23** - Now we are going to add method which is going to use DbExecutor state to handle incoming QueryAccount Message and return list of accounts as JSON.
